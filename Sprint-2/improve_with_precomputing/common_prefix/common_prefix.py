@@ -1,24 +1,48 @@
-from typing import List
+from typing import List, Dict
 
 
-def find_longest_common_prefix(strings: List[str]):
-    """
-    find_longest_common_prefix returns the longest string common at the start of any two strings in the passed list.
+class TrieNode:
+    __slots__ = ("children", "count")
 
-    In the event that an empty list, a list containing one string, or a list of strings with no common prefixes is passed, the empty string will be returned.
-    """
-    longest = ""
-    for string_index, string in enumerate(strings):
-        for other_string in strings[string_index+1:]:
-            common = find_common_prefix(string, other_string)
-            if len(common) > len(longest):
-                longest = common
-    return longest
+    def __init__(self):
+        self.children: Dict[str, "TrieNode"] = {}
+        self.count = 0
 
 
-def find_common_prefix(left: str, right: str) -> str:
-    min_length = min(len(left), len(right))
-    for i in range(min_length):
-        if left[i] != right[i]:
-            return left[:i]
-    return left[:min_length]
+def find_longest_common_prefix(strings: List[str]) -> str:
+    if len(strings) < 2:
+        return ""
+
+    root = TrieNode()
+
+    # ---- PRECOMPUTE: build trie ----
+    for s in strings:
+        node = root
+        for ch in s:
+            if ch not in node.children:
+                node.children[ch] = TrieNode()
+            node = node.children[ch]
+            node.count += 1
+
+    # ---- FIND BEST PREFIX ----
+    best_prefix = []
+    node = root
+
+    while True:
+        # pick a child that still has at least 2 strings passing through
+        next_node = None
+        next_char = None
+
+        for ch, child in node.children.items():
+            if child.count >= 2:
+                next_node = child
+                next_char = ch
+                break
+
+        if not next_node:
+            break
+
+        best_prefix.append(next_char)
+        node = next_node
+
+    return "".join(best_prefix)
